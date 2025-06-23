@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.h5
+.DS_Store
+.env/
+*.tgz
+*.zip
+archive/lfw_funneled/
+archive/non_faces/
