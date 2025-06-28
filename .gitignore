@@ -7,3 +7,5 @@ __pycache__/
 *.zip
 archive/faces/
 archive/non_faces/
+archive/test_cases/
+.gitattributes

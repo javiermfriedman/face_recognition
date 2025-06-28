@@ -6,8 +6,9 @@ from tensorflow.keras.losses import BinaryCrossentropy # The correct loss for bi
 from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-def build_cnn_model(input_shape=(180, 180, 1)):
+def build_cnn_model(input_shape=(180, 180, 3)): # CHANGED FROM 1 TO 3
     """
     Builds a Convolutional Neural Network (CNN) model for binary image classification.
 
@@ -59,7 +60,7 @@ def build_cnn_model(input_shape=(180, 180, 1)):
 
     return model
 
-def compile_and_train_model(model, X, y, epochs=40, batch_size=32, validation_split=0.2):
+def compile_and_train_model(model, X, y, epochs=40, batch_size=32, validation_split=0.2, model_save_path='saved_model'):
     print("[INFO] Compiling the model...")
     #   optimizer: Adam is a popular choice for efficient learning.
     #   loss: BinaryCrossentropy because we using binary classifivation 
@@ -74,26 +75,35 @@ def compile_and_train_model(model, X, y, epochs=40, batch_size=32, validation_sp
     # Print a summary of the model's structure. This is very helpful!
     print("\n--- Model Summary ---")
     model.summary()
-    print("\n[INFO] Model compiled successfully. Starting training...")
+    
 
     # Split the data into training and validation sets make it random
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=validation_split, random_state=42)
 
-    # Train the model!
-    #   X_train, y_train: The data used for learning.
-    #   epochs: How many times the model will see the entire training dataset.
-    #   batch_size: How many samples are processed at once before the model updates its weights.
-    #   validation_data: The data used to check performance on unseen examples during training.
-    #   verbose=1: Shows a progress bar and training metrics per epoch.
-    history = model.fit(
+    print("\n[INFO] Model compiled successfully. Starting training...")
+    history = model.fit( 
         X_train, y_train,
-        epochs=epochs,
-        batch_size=batch_size,
+        epochs=epochs,          # How many times the model will see the entire training dataset.
+        batch_size=batch_size,  # How many samples are processed at once before the model updates its weights.
         validation_data=(X_val, y_val),
-        verbose=1
+        verbose=1               # Shows a progress bar and training metrics per epoch.
     )
     print("[INFO] Model training completed.")
-    return history
+
+    plot_loss_tf(history)
+
+    print(f"[INFO] Saving the model to: {model_save_path}")
+    try:
+        model.save(model_save_path)
+        print("[INFO] Model saved successfully.")
+    except Exception as e:
+        print(f"[ERROR] Failed to save model: {e}")
+        return None # Added return None on failure
+
+
+    # Return only the trained model
+    return model
+
 
 def plot_loss_tf(history):
     """
@@ -108,3 +118,16 @@ def plot_loss_tf(history):
     plt.legend()
     plt.grid(True)
     plt.show()
+
+def load_trained_model(model_path):
+    if not os.path.exists(model_path):
+        print(f"[ERROR] Model file not found at: {model_path}")
+        return None
+    print(f"[INFO] Loading model from: {model_path}")
+    try:
+        model = tf.keras.models.load_model(model_path)
+        print("[INFO] Model loaded successfully.")
+        return model
+    except Exception as e:
+        print(f"[ERROR] Failed to load model: {e}")
+        return None
