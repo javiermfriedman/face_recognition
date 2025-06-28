@@ -97,8 +97,8 @@ def load_data(face_img_path, other_img_path):
     # create labels for the data we just stored in an array
     y_face = [1] * len(face_data)
     y_neg = [0] * len(neg_data)
-    print(f"size of face ing data set is: {len(face_data)}")
-    print(f"size of non face ing data set is: {len(neg_data)}")
+    # print(f"size of face ing data set is: {len(face_data)}")
+# print(f"size of non face ing data set is: {len(neg_data)}")
     # Combine
     X_data = face_data + neg_data
     y_data = y_face + y_neg
