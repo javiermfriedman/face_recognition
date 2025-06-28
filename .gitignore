@@ -5,5 +5,5 @@ __pycache__/
 .env/
 *.tgz
 *.zip
-archive/lfw_funneled/
+archive/faces/
 archive/non_faces/
