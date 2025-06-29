@@ -8,73 +8,169 @@ import numpy as np
 # os handles directory paths and file listings.
 # cv2 Used for reading, transforming, and manipulating images and video
 
+def print_img(img):
+    plt.figure(figsize=(6, 6))
+    plt.imshow(img)
+    plt.title("Processed Square Image")
+    plt.axis('off')
+    plt.show()
 
-def preprocess_image(path, target_size=(180, 180)):
-    # Read the image in color (default for cv2.imread, or use cv2.IMREAD_COLOR)
-    # OpenCV reads images as BGR by default, so we convert to RGB
+def crop_img(img):
+    h, w, _ = img.shape
+    if h != w:
+        # Determine the size of the square crop
+        min_dim = min(h, w)
+        
+        # Calculate the starting coordinates for the crop to center it
+        start_h = (h - min_dim) // 2
+        start_w = (w - min_dim) // 2
+        
+        # Perform the crop
+        img = img[start_h:start_h + min_dim, start_w:start_w + min_dim]
+        
+        # print(f"Cropped image dimensions: {img.shape[1]}x{img.shape[0]}")
+
+    return img
+
+
+def sharpen_image_unsharp_mask(img_rgb_float_01, sigma=1.0, strength=1.5):
+    # Convert to uint8 (0-255)
+    img_uint8 = (img_rgb_float_01 * 255).astype(np.uint8)
+
+    blurred = cv2.GaussianBlur(img_uint8, (0, 0), sigma)
+    sharpened_uint8 = cv2.addWeighted(img_uint8, 1.0 + strength, blurred, -strength, 0)
+    
+    # Convert back to float 0-1
+    sharpened_float_01 = sharpened_uint8 / 255.0
+    return sharpened_float_01
+
+
+def preprocess_image(path, target_size=(150, 150)):
+    
     img = cv2.imread(path, cv2.IMREAD_COLOR)
 
     if img is None:
         print(f"Warning: Could not load image from {path}. Skipping.")
         return None
-
-    # Convert BGR to RGB
+    
+    # 2. Convert BGR to RGB 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    # Resize the image
-    # Note: This will still stretch/squish if aspect ratio is different.
-    # For more advanced handling, see previous discussion on cropping/padding.
+    # 3. Crop to square
+    img = crop_img(img)
+
+    # print(f"image before resize")
+    # print_img(img)
+
+    # 5. Resize the image
     img = cv2.resize(img, target_size)
 
-    # Normalize pixel values to [0, 1]
+    # print(f"image after resize")
+    # print_img(img)
+
+    # 6. Normalize pixel values to [0, 1]
     img = img / 255.0
 
-    # For color images, we no longer need to expand_dims as they already have 3 channels (H, W, C)
-    # img = np.expand_dims(img, axis=-1) # REMOVE THIS LINE for color images
-
+    # 7. Sharpening 
+    img = sharpen_image_unsharp_mask(img, sigma=1.0, strength=1.0) # Tune sigma and strength
+    # print(f"image after resize")
+    # print_img(img)
     return img
 
 
 """
     takes the data from non face pictures and puts them into array
 """
-def load_neg_data(dataset_path):
-    print("[INFO] Loading sample non-faces from:", dataset_path) # Changed message
+def load_neg_data():
+    non_face_1_path = "archive/non_faces"
+    non_face_2_path = "archive/non_face2/test"
+    non_face_3_path = "archive/non_face2/train"
+    
+     
+    
     neg_data = []
-    images = os.listdir(dataset_path)
+    image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff') 
 
-    image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff') # Added common image extensions
+    print("[INFO] Loading sample non-faces from:", non_face_2_path)
+    non_faces_2 = os.listdir(non_face_2_path)
 
-    for image_name in images:
-        img_path = os.path.join(dataset_path, image_name)
+    for image_name in non_faces_2:
+        img_path = os.path.join(non_face_2_path, image_name)
+        
         # Check if it's a file and has a valid image extension
         if os.path.isfile(img_path) and image_name.lower().endswith(image_extensions):
             processed_img = preprocess_image(img_path)
             if processed_img is not None:
                 neg_data.append(processed_img)
-        else:
-            print(f"Skipping non-image file or directory: {img_path}")
+        
             
+
+    print("[INFO] Loading sample non-faces from:", non_face_1_path)
+    non_face_1 = os.listdir(non_face_1_path)
+    for image_name in non_face_1:
+        img_path = os.path.join(non_face_1_path, image_name)
+        
+        if os.path.isfile(img_path) and image_name.lower().endswith(image_extensions):
+            processed_img = preprocess_image(img_path)
+            if processed_img is not None:
+                neg_data.append(processed_img)
+        
+    print("[INFO] Loading sample non-faces from:", non_face_3_path)     
+    non_face_3 = os.listdir(non_face_3_path)
+
+    for image_name in non_face_3:
+        img_path = os.path.join(non_face_3_path, image_name)
+        
+        if os.path.isfile(img_path) and image_name.lower().endswith(image_extensions):
+            processed_img = preprocess_image(img_path)
+            if processed_img is not None:
+                neg_data.append(processed_img)
 
     return neg_data
         
 """
     takes the data from face pictures and puts them into array
 """
-def load_face_data(dataset_path):
-    print("[INFO] Loading sample faces from:", dataset_path)
+def load_face_data():
+    
+
+    face_path_1 = "archive/faces_1"
+    face_path_2 = "archive/faces_2"
 
     face_data = []
-    people = os.listdir(dataset_path)
-    people = [ # this filters for non directories hidden, that aren;t wanted
-        person for person in os.listdir(dataset_path)
-        if os.path.isdir(os.path.join(dataset_path, person))
+    
+    faces_1 = os.listdir(face_path_1)
+    faces_1 = [ # this filters for non directories hidden, that aren;t wanted
+        person for person in os.listdir(face_path_1)
+        if os.path.isdir(os.path.join(face_path_1, person))
+    ]
+
+    faces_2 = os.listdir(face_path_2)
+    faces_2 = [ # this filters for non directories hidden, that aren;t wanted
+        person for person in os.listdir(face_path_2)
+        if os.path.isdir(os.path.join(face_path_2, person))
     ]
 
     image_extensions = ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff') # Added common image extensions
+    print("[INFO] Loading sample faces from:", face_path_2)
 
-    for person in people:
-        person_dir = os.path.join(dataset_path, person) # makes a path for the person's folder content
+    for person in faces_2:
+        person_dir = os.path.join(face_path_2, person) # makes a path for the person's folder content
+        
+        for image_name in os.listdir(person_dir):
+            img_path = os.path.join(person_dir, image_name)
+            if os.path.isfile(img_path) and image_name.lower().endswith(image_extensions):
+                
+                processed_img = preprocess_image(img_path)
+                
+                if processed_img is not None:
+                    face_data.append(processed_img)
+                    found_image = True
+                    
+        
+    print("[INFO] Loading sample faces from:", face_path_1)
+    for person in faces_1:
+        person_dir = os.path.join(face_path_1, person) # makes a path for the person's folder content
         
         # Iterate through files in the person's directory to find an image
         found_image = False
@@ -85,11 +181,8 @@ def load_face_data(dataset_path):
                 if processed_img is not None:
                     face_data.append(processed_img)
                     found_image = True
-                    # If you only want one image per person, keep break. 
-                    # If you want all images, remove break.
-                    break 
-        if not found_image:
-            print(f"Warning: No valid image found in {person_dir}. Skipping.")
+                    
+        
 
 
     return face_data
@@ -97,10 +190,13 @@ def load_face_data(dataset_path):
 """
     put pos and neg data and put it into x array, build y label array
 """     
-def load_data(face_img_path, other_img_path):
-    face_data = load_face_data(face_img_path)
+def load_data():
+    face_data = load_face_data()
+    neg_data = load_neg_data()
 
-    neg_data = load_neg_data(other_img_path)
+    print(f"number of face data: {len(face_data)}")
+    print(f"number of non_face data: {len(neg_data)}")
+
 
     # create labels for the data we just stored in an array
     y_face = [1] * len(face_data)

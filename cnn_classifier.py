@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-def build_cnn_model(input_shape=(180, 180, 3)): # CHANGED FROM 1 TO 3
+def build_cnn_model(input_shape=(150, 150, 3)): # CHANGED FROM 1 TO 3
     """
     Builds a Convolutional Neural Network (CNN) model for binary image classification.
 
@@ -21,7 +21,6 @@ def build_cnn_model(input_shape=(180, 180, 3)): # CHANGED FROM 1 TO 3
     # Create Sequential model, layers are stacked one after another.
     model = Sequential([
 
-        
         # --- First Convolutional Block ---
         # Conv2D: This layer learns different features (like edges or textures) from the image.
         #   32: We use 32 different filters (feature detectors) in this layer.
@@ -76,7 +75,7 @@ def compile_and_train_model(model, X, y, epochs=40, batch_size=32, validation_sp
     print("\n--- Model Summary ---")
     model.summary()
     
-
+    
     # Split the data into training and validation sets make it random
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=validation_split, random_state=42)
 
